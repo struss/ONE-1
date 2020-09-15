@@ -52,6 +52,7 @@
 #include "kernels/Sqrt.h"
 #include "kernels/Squeeze.h"
 #include "kernels/Tanh.h"
+#include "kernels/UnidirectionalSequenceLSTM.h"
 #include "kernels/Unpack.h"
 #include "kernels/Transpose.h"
 #include "kernels/TransposeConv.h"
@@ -660,6 +661,67 @@ std::unique_ptr<Kernel> KernelBuilder::visit(const luci::CircleTransposeConv *no
 
   return std::make_unique<kernels::TransposeConv>(input_sizes, filter, out_backprop, bias, output,
                                                   params);
+}
+
+std::unique_ptr<Kernel> KernelBuilder::visit(const luci::CircleUnidirectionalSequenceLSTM *node)
+{
+  assert(node->arity() == 24);
+
+  const Tensor *input = getInputTensor(node->input());
+
+  const Tensor *input_to_input_weights = getInputTensor(node->input_to_input_weights());
+  const Tensor *input_to_forget_weights = getInputTensor(node->input_to_forget_weights());
+  const Tensor *input_to_cell_weights = getOptionalInputTensor(node->input_to_cell_weights());
+  const Tensor *input_to_output_weights = getOptionalInputTensor(node->input_to_output_weights());
+
+  const Tensor *recurrent_to_input_weights = getInputTensor(node->recurrent_to_input_weights());
+  const Tensor *recurrent_to_forget_weights = getInputTensor(node->recurrent_to_forget_weights());
+  const Tensor *recurrent_to_cell_weights =
+      getOptionalInputTensor(node->recurrent_to_cell_weights());
+  const Tensor *recurrent_to_output_weights =
+      getOptionalInputTensor(node->recurrent_to_output_weights());
+
+  const Tensor *cell_to_input_weights = getInputTensor(node->cell_to_input_weights());
+  const Tensor *cell_to_forget_weights = getInputTensor(node->cell_to_forget_weights());
+  const Tensor *cell_to_output_weights = getOptionalInputTensor(node->cell_to_output_weights());
+
+  const Tensor *input_gate_bias = getInputTensor(node->input_gate_bias());
+  const Tensor *forget_gate_bias = getInputTensor(node->forget_gate_bias());
+  const Tensor *cell_gate_bias = getOptionalInputTensor(node->cell_gate_bias());
+  const Tensor *output_gate_bias = getOptionalInputTensor(node->output_gate_bias());
+
+  const Tensor *projection_weights = getInputTensor(node->projection_weights());
+  const Tensor *projection_bias = getInputTensor(node->projection_bias());
+
+  const Tensor *output_state = getOptionalInputTensor(node->activation_state());
+  const Tensor *cell_state = getOptionalInputTensor(node->cell_state());
+
+  const Tensor *input_layer_norm_coefficients =
+      getInputTensor(node->input_layer_norm_coefficients());
+  const Tensor *forget_layer_norm_coefficients =
+      getInputTensor(node->forget_layer_norm_coefficients());
+  const Tensor *cell_layer_norm_coefficients =
+      getOptionalInputTensor(node->cell_layer_norm_coefficients());
+  const Tensor *output_layer_norm_coefficients =
+      getOptionalInputTensor(node->output_layer_norm_coefficients());
+
+  Tensor *output = getOutputTensor(node);
+
+  UnidirectionalSequenceLSTMParams params{};
+  params.activation = node->fusedActivationFunction();
+  params.cell_clip = node->cell_clip();
+  params.proj_clip = node->proj_clip();
+  params.time_major = node->time_major();
+  params.asymmetric_quantize_inputs = node->asymmetric_quantize_inputs();
+
+  return std::make_unique<kernels::UnidirectionalSequenceLSTM>(
+      input, input_to_input_weights, input_to_forget_weights, input_to_cell_weights,
+      input_to_output_weights, recurrent_to_input_weights, recurrent_to_forget_weights,
+      recurrent_to_cell_weights, recurrent_to_output_weights, cell_to_input_weights,
+      cell_to_forget_weights, cell_to_output_weights, input_gate_bias, forget_gate_bias,
+      cell_gate_bias, output_gate_bias, projection_weights, projection_bias, output_state,
+      cell_state, input_layer_norm_coefficients, forget_layer_norm_coefficients,
+      cell_layer_norm_coefficients, output_layer_norm_coefficients, output, params);
 }
 
 std::unique_ptr<Kernel> KernelBuilder::visit(const luci::CircleUnpack *node)

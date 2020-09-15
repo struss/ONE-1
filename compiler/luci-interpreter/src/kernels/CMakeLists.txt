@@ -78,6 +78,8 @@ set(SOURCES
     Transpose.cpp
     TransposeConv.h
     TransposeConv.cpp
+    UnidirectionalSequenceLSTM.h
+    UnidirectionalSequenceLSTM.cpp
     Unpack.h
     Unpack.cpp)
 

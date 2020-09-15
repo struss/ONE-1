@@ -158,7 +158,7 @@ struct TransposeConvParams
   int32_t stride_width;
 };
 
-struct UnidirectionalSequenceLSTM
+struct UnidirectionalSequenceLSTMParams
 {
   Activation activation;
   float cell_clip;
