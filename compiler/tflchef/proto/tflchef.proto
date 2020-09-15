@@ -460,6 +460,7 @@ message UnidirectionalSequenceLSTMOptions {
   optional float cell_clip = 2 [default = 0.0];
   optional float proj_clip = 3 [default = 0.0];
   optional bool time_major = 4 [default = false];
+  optional bool asymmetric_quantize_inputs = 5 [default = false];
 }
 
 message UniqueOptions {
