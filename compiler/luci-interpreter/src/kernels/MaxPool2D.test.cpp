@@ -87,6 +87,77 @@ TEST(MaxPool2DTest, Uint8)
   EXPECT_THAT(extractTensorShape(output_tensor), ::testing::ElementsAreArray(ref_output_shape));
 }
 
+TEST(MaxPool2DTest, InvalidInputOutputType_NEG)
+{
+  std::pair<float, int32_t> quant_param = quantizationParams<uint8_t>(-15.9375, 15.9375);
+  std::vector<float> input_data{
+      0,  -6, 12, 4, //
+      -3, -2, 10, 7, //
+  };
+  Tensor input_tensor = makeInputTensor<DataType::U8>({1, 2, 4, 1}, quant_param.first,
+                                                      quant_param.second, input_data);
+  Tensor output_tensor = makeOutputTensor(DataType::FLOAT32);
+
+  Pool2DParams params{};
+  params.padding = Padding::VALID;
+  params.filter_height = 2;
+  params.filter_width = 2;
+  params.stride_height = 2;
+  params.stride_width = 2;
+  params.activation = Activation::RELU6;
+
+  MaxPool2D kernel(&input_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
+TEST(MaxPool2DTest, InvalidInputDimNum_NEG)
+{
+  Shape input_shape{3, 5, 1};
+  std::vector<float> input_data{
+      1,  -1, 0,  -2, 2,  //
+      -7, -6, -5, -4, -3, //
+      5,  4,  3,  6,  7,  //
+  };
+  Tensor input_tensor = makeInputTensor<DataType::FLOAT32>(input_shape, input_data);
+  Tensor output_tensor = makeOutputTensor(DataType::FLOAT32);
+
+  Pool2DParams params{};
+  params.padding = Padding::VALID;
+  params.filter_height = 2;
+  params.filter_width = 3;
+  params.stride_height = 1;
+  params.stride_width = 2;
+  params.activation = Activation::RELU6;
+
+  MaxPool2D kernel(&input_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
+TEST(MaxPool2DTest, MismatchQuantParam_NEG)
+{
+  std::pair<float, int32_t> input_quant_param = quantizationParams<uint8_t>(-15.9375, 15.9375);
+  std::pair<float, int32_t> output_quant_param = quantizationParams<uint8_t>(-31.875, 31.875);
+  std::vector<float> input_data{
+      0,  -6, 12, 4, //
+      -3, -2, 10, 7, //
+  };
+  Tensor input_tensor = makeInputTensor<DataType::U8>({1, 2, 4, 1}, input_quant_param.first,
+                                                      input_quant_param.second, input_data);
+  Tensor output_tensor =
+      makeOutputTensor(DataType::U8, output_quant_param.first, output_quant_param.second);
+
+  Pool2DParams params{};
+  params.padding = Padding::VALID;
+  params.filter_height = 2;
+  params.filter_width = 2;
+  params.stride_height = 2;
+  params.stride_width = 2;
+  params.activation = Activation::RELU6;
+
+  MaxPool2D kernel(&input_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
 } // namespace
 } // namespace kernels
 } // namespace luci_interpreter

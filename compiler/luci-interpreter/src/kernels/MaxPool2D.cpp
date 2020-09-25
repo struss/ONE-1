@@ -35,8 +35,8 @@ MaxPool2D::MaxPool2D(const Tensor *input, Tensor *output, const Pool2DParams &pa
 
 void MaxPool2D::configure()
 {
-  assert(input()->element_type() == output()->element_type());
-  assert(input()->shape().num_dims() == 4);
+  LUCI_INTERPRETER_CHECK(input()->element_type() == output()->element_type());
+  LUCI_INTERPRETER_CHECK(input()->shape().num_dims() == 4);
   const Shape &input_shape = input()->shape();
   const int32_t batches = input_shape.dim(0);
   const int32_t input_height = input_shape.dim(1);
@@ -56,8 +56,8 @@ void MaxPool2D::configure()
   output()->resize({batches, output_height, output_width, depth});
   if (input()->element_type() == DataType::U8 || input()->element_type() == DataType::S8)
   {
-    assert(input()->scale() == output()->scale());
-    assert(input()->zero_point() == output()->zero_point());
+    LUCI_INTERPRETER_CHECK(input()->scale() == output()->scale());
+    LUCI_INTERPRETER_CHECK(input()->zero_point() == output()->zero_point());
   }
 }
 
