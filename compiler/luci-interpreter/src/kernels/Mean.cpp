@@ -48,7 +48,7 @@ static int getAxisReductionCount(const int *axes_data, int num_axes, int input_n
   for (int i = 0; i < num_axes; ++i)
   {
     int current = axes_data[i] >= 0 ? axes_data[i] : axes_data[i] + input_num_dims;
-    assert(current >= 0 && current < input_num_dims);
+    LUCI_INTERPRETER_CHECK(current >= 0 && current < input_num_dims);
     for (int j = 0; j < i; j++)
     {
       int previous = axes_data[j] >= 0 ? axes_data[j] : axes_data[j] + input_num_dims;
@@ -130,14 +130,14 @@ Mean::Mean(const Tensor *input, const Tensor *axes, Tensor *output, const Reduce
 
 void Mean::configure()
 {
-  assert(input()->element_type() == output()->element_type());
-  assert(axes()->element_type() == DataType::S32);
+  LUCI_INTERPRETER_CHECK(input()->element_type() == output()->element_type());
+  LUCI_INTERPRETER_CHECK(axes()->element_type() == DataType::S32);
   const Shape &input_shape = input()->shape();
   int input_num_dims = input_shape.num_dims();
 
   const auto *axes_data = getTensorData<int32_t>(axes());
   int num_axes = axes()->shape().num_elements();
-  assert(num_axes <= 4);
+  LUCI_INTERPRETER_CHECK(num_axes <= 4);
 
   Shape output_shape = getOutputShape(input_shape, axes_data, num_axes, _params.keep_dims);
   output()->resize(output_shape);

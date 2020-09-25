@@ -151,6 +151,63 @@ TEST(MeanTest, Uint8NotKeepDims)
   EXPECT_THAT(extractTensorShape(output_tensor), ::testing::ElementsAreArray(ref_output_shape));
 }
 
+TEST(MeanTest, InvalidInputOutputType_NEG)
+{
+  float kQuantizedTolerance = getTolerance(-1.0, 1.0, 255);
+  std::vector<float> input_data = {0.4, 0.2, 0.3, 0.4, 0.5, 0.6};
+  std::pair<float, int32_t> quant_param = quantizationParams<uint8_t>(-1.0f, 1.0f);
+
+  std::vector<int32_t> axis_data{1};
+  Tensor input_tensor =
+      makeInputTensor<DataType::U8>({1, 3, 2}, quant_param.first, quant_param.second, input_data);
+  Tensor axis_tensor = makeInputTensor<DataType::S32>({1}, axis_data);
+  Tensor output_tensor = makeOutputTensor(DataType::FLOAT32);
+
+  ReducerParams params{};
+  params.keep_dims = false;
+
+  Mean kernel(&input_tensor, &axis_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
+TEST(MeanTest, InvalidAxesType_NEG)
+{
+  float kQuantizedTolerance = getTolerance(-1.0, 1.0, 255);
+  std::vector<float> input_data = {0.4, 0.2, 0.3, 0.4, 0.5, 0.6};
+  std::pair<float, int32_t> quant_param = quantizationParams<uint8_t>(-1.0f, 1.0f);
+
+  std::vector<uint8_t> axis_data{1};
+  Tensor input_tensor =
+      makeInputTensor<DataType::U8>({1, 3, 2}, quant_param.first, quant_param.second, input_data);
+  Tensor axis_tensor = makeInputTensor<DataType::U8>({1}, axis_data);
+  Tensor output_tensor = makeOutputTensor(DataType::U8, quant_param.first, quant_param.second);
+
+  ReducerParams params{};
+  params.keep_dims = false;
+
+  Mean kernel(&input_tensor, &axis_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
+TEST(MeanTest, InvalidAxesElementsNum_NEG)
+{
+  float kQuantizedTolerance = getTolerance(-1.0, 1.0, 255);
+  std::vector<float> input_data = {0.4, 0.2, 0.3, 0.4, 0.5, 0.6};
+  std::pair<float, int32_t> quant_param = quantizationParams<uint8_t>(-1.0f, 1.0f);
+
+  std::vector<int32_t> axis_data{1, 1, 1, 1, 1};
+  Tensor input_tensor =
+      makeInputTensor<DataType::U8>({1, 3, 2}, quant_param.first, quant_param.second, input_data);
+  Tensor axis_tensor = makeInputTensor<DataType::S32>({5}, axis_data);
+  Tensor output_tensor = makeOutputTensor(DataType::U8, quant_param.first, quant_param.second);
+
+  ReducerParams params{};
+  params.keep_dims = false;
+
+  Mean kernel(&input_tensor, &axis_tensor, &output_tensor, params);
+  EXPECT_ANY_THROW(kernel.configure());
+}
+
 } // namespace
 } // namespace kernels
 } // namespace luci_interpreter
